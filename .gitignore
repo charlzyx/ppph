@@ -1,0 +1,6 @@
+.vscode/
+.idea/
+node_modules/
+pkg/
+lib/
+dist/
