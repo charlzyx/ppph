@@ -1,20 +1,26 @@
 
-import React, { Component, PureComponent } from 'react';
+/* eslint-disable react/no-multi-comp, react/forbid-prop-types, react/require-default-props */
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import hoistNonReactStatics from 'hoist-non-react-statics';
 import { piper } from '../src/main';
 
 export const P1HOC = (Comp) => {
   class P1 extends Component {
+    static propTypes = {
+      pass: PropTypes.object,
+    };
+
     componentDidMount() {
       console.log('p1 did mount');
     }
 
     render() {
+      const { pass = {} } = this.props;
       const ctx = {
         ...this.props,
         pass: {
-          ...(this.props.pass || {}),
+          ...pass,
           p1: true,
         },
       };
@@ -28,15 +34,20 @@ export const P1HOC = (Comp) => {
 
 export const P2HOC = (Comp) => {
   class P2 extends Component {
+    static propTypes = {
+      pass: PropTypes.object,
+    };
+
     componentDidMount() {
       console.log('p2 did mount');
     }
 
     render() {
+      const { pass = {} } = this.props;
       const ctx = {
         ...this.props,
         pass: {
-          ...(this.props.pass || {}),
+          ...pass,
           p2: true,
         },
       };
@@ -49,15 +60,20 @@ export const P2HOC = (Comp) => {
 };
 export const P3HOC = (Comp) => {
   class P3 extends Component {
+    static propTypes = {
+      pass: PropTypes.object,
+    };
+
     componentDidMount() {
       console.log('p3 did mount');
     }
 
     render() {
+      const { pass = {} } = this.props;
       const ctx = {
         ...this.props,
         pass: {
-          ...(this.props.pass || {}),
+          ...pass,
           p3: true,
         },
       };
