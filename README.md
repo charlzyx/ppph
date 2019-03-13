@@ -1,4 +1,4 @@
-# **P**ipes **P**rops **P**ass to **H**oc
+# **P**ipe **P**rops **P**ass to **H**oc
 
 > before
 ```jsx
