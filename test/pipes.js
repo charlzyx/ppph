@@ -1,105 +1,115 @@
-
-/* eslint-disable react/no-multi-comp, react/forbid-prop-types, react/require-default-props */
+/* eslint-disable react/no-multi-comp, no-console,react/prop-types */
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import hoistNonReactStatics from 'hoist-non-react-statics';
 import { piper } from '../src/main';
 
-export const P1HOC = (Comp) => {
-  class P1 extends Component {
-    static propTypes = {
-      pass: PropTypes.object,
-    };
+/**
+ * ----------------------------------------------------------------------------
+ * diff with normal HOC
+ * 1. statics:  because is no decorator or HOC(Comp) to write, so statics is no need to hoist
+ * 2. forwardRef: will be 2nd param for Pipe HOC, gift for you.
+ * ----------------------------------------------------------------------------
+ */
 
-    componentDidMount() {
-      console.log('p1 did mount');
+const toFloat = (n) => {
+  const num = parseFloat(n);
+  const isNaN = Number.isNaN(num);
+  return isNaN ? 0 : num.toFixed(2);
+};
+
+// look at the ref
+const KBSupportHOC = (Comp, forwardRef) => {
+  class KBSupport extends Component {
+    onKeyDown = (e) => {
+      const { value = 0, onChange } = this.props;
+      if (e.key === 'ArrowUp') {
+        const next = +value + 1;
+        onChange(next);
+      }
+      if (e.key === 'ArrowDown') {
+        const next = +value - 1;
+        onChange(next);
+      }
     }
 
     render() {
-      const { pass = {} } = this.props;
-      const ctx = {
-        ...this.props,
-        pass: {
-          ...pass,
-          p1: true,
-        },
-      };
-      console.log('P1 render', this.props);
-      return <Comp {...ctx} p1={1} pv1="v1" />;
+      console.log('kb', this.props);
+      // don't forget forwardRef, two ways to do this
+      // 1. like react doc
+      // return <Comp {...this.props} ref={this.props.forwardRef} onKeyDown={this.onKeyDown} />;
+      // 2. friendly, the 2nd param is the forwardRef, so you can easily write by this
+      return <Comp {...this.props} ref={forwardRef} onKeyDown={this.onKeyDown} />;
     }
   }
-  hoistNonReactStatics(P1, Comp);
-  return P1;
+
+  return KBSupport;
 };
 
-export const P2HOC = (Comp) => {
-  class P2 extends Component {
-    static propTypes = {
-      pass: PropTypes.object,
-    };
-
-    componentDidMount() {
-      console.log('p2 did mount');
+// look at the ref
+export const ChangeAdaptorHOC = (Comp, forwardRef) => {
+  class ChangeAdaptor extends Component {
+    onChange = (e) => {
+      const { onChange, changeAdaptor = v => v } = this.props;
+      onChange(changeAdaptor(e));
     }
 
     render() {
-      const { pass = {} } = this.props;
-      const ctx = {
-        ...this.props,
-        pass: {
-          ...pass,
-          p2: true,
-        },
-      };
-      console.log('P2 render', this.props);
-      return <Comp {...ctx} p2={2} pv2="v2" />;
+      // don't forget forwardRef, two ways to do this
+      // 1. like react doc
+      // return <Comp {...this.props} ref={this.props.forwardRef} onChange={this.onChange} />;
+      // 2. friendly, the 2nd param is the forwardRef, so you can easily write by this
+      return <Comp {...this.props} ref={forwardRef} onChange={this.onChange} />;
     }
   }
-  hoistNonReactStatics(P2, Comp);
-  return P2;
+  return ChangeAdaptor;
 };
-export const P3HOC = (Comp) => {
-  class P3 extends Component {
-    static propTypes = {
-      pass: PropTypes.object,
-    };
 
-    componentDidMount() {
-      console.log('p3 did mount');
+// look at the ref
+const FixedIoHOC = (Comp, forwardRef) => {
+  class FixedInput extends Component {
+    componentWillReceiveProps(nextProps) {
+      const { value, onChange } = nextProps;
+      const next = toFloat(value);
+      if (next !== value) {
+        onChange(next);
+      }
     }
 
     render() {
-      const { pass = {} } = this.props;
-      const ctx = {
-        ...this.props,
-        pass: {
-          ...pass,
-          p3: true,
-        },
-      };
-      console.log('P3 render', this.props);
-      return <Comp {...ctx} p3={3} pv3="v3" />;
+      // don't forget forwardRef, two ways to do this
+      // 1. like react doc
+      // return <Comp {...this.props} ref={this.props.forwardRef} />;
+      // 2. friendly, the 2nd param is the forwardRef, so you can easily write by this
+      return <Comp {...this.props} ref={forwardRef} />;
     }
   }
-  hoistNonReactStatics(P3, Comp);
-  return P3;
+
+  return FixedInput;
 };
 
-export const p1 = piper({
-  who: 'p1',
-  when: (type, props) => props.p1,
-  how: P1HOC,
-  why: (e) => { console.log('p1', e); },
+/**
+ * Pipe
+ * @type {Pipe}
+ */
+export const KBSupportPipe = piper({
+  who: 'kbSupport',
+  when: (type, props) => props.kb,
+  how: KBSupportHOC,
+  why: (e) => { console.log('AdaptorHOC', e); },
 });
-export const p2 = piper({
-  who: 'p2',
-  when: (type, props) => props.p2,
-  how: P2HOC,
-  why: (e) => { console.log('p2', e); },
+
+export const FixedIoPipe = piper({
+  who: 'fixed',
+  when: (type, props) => props.fixed,
+  how: FixedIoHOC,
+  why: (e) => { console.log('FixedIoHOC', e); },
+  ph: [-20, 'fixed'],
 });
-export const p3 = piper({
-  who: 'p3',
-  when: (type, props) => props.p3,
-  how: P3HOC,
-  why: (e) => { console.log('p3', e); },
+
+
+export const changeAdaptorPipe = piper({
+  who: 'changeAdaptor',
+  when: (type, props) => props.changeAdaptor,
+  how: ChangeAdaptorHOC,
+  why: (e) => { console.log('AdaptorHOC', e); },
+  ph: [-100, 'changeAdaptor'],
 });

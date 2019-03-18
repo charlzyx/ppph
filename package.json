@@ -1,6 +1,6 @@
 {
   "name": "ppph",
-  "version": "0.2.0",
+  "version": "1.0.0-rc",
   "description": "for react, pipes props pass to hoc.",
   "main": "lib/umd/index.js",
   "esnext": "lib/esnext/index.js",

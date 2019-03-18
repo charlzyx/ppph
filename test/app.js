@@ -1,19 +1,12 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
+import PlayGround from './playground';
 
-const ShowProps = (props) => {
-  console.log('Show props:\n', props);
-  return `my props is: \n${JSON.stringify(props)}`;
-};
-
-
-class App extends Component {
-
+class App extends PureComponent {
   render() {
     return (
       <div>
-        <ShowProps p1="p1" p2="p2" p3="p3">
-          hello, ppph
-        </ShowProps>
+        <h2>Hello, ppph</h2>
+        <PlayGround />
       </div>
     );
   }
