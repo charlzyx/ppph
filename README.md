@@ -10,6 +10,7 @@ yarn add ppph
 npm install ppph -S
 ```
 
+> desc
 
 ```js
 /**
@@ -17,10 +18,10 @@ npm install ppph -S
  * ppph: Pipe Props Pass to Hoc
  * ---------------------------------------------------------
  *
- * // in code
+ * // before: in code
  *   <AnyComp p1="p1" p2="p2" p3="p3" />
  * ->
- * // in Chrome React DevTools
+ * // after: in Chrome React DevTools
  *  <P3 p1="p1" p2="p2" p3="p3">
  *    <P2 p1="p1" p2="p2" p3="p3">
  *      <P1 p1="p1" p2="p2" p3="p3">
@@ -28,8 +29,8 @@ npm install ppph -S
  *      </P1>
  *    </P2>
  *  </P3>
- * ---------------------------------------------------------
  *
+ * ---------------------------------------------------------
  * PipeHOC diff with normal HOC
  * 1. statics:  because is no decorator or HOC(Comp) to write, so statics is no need to hoist
  * 2. forwardRef: will be 2nd param for Pipe HOC, gift for you.
@@ -37,39 +38,6 @@ npm install ppph -S
  *
  * runtime surprise!
  */
-```
-
-> before
-```jsx
-// code
-<AnyComp p1="p1" p1="p2" p1="p3" />
-```
-
-> after
-```jsx
-// look at React DevTools
-<P3 p1="p1" p2="p2" p3="p3">
-  <P2 p1="p1" p2="p2" p3="p3">
-    <P1 p1="p1" p2="p2" p3="p3">
-      <AnyComp
-        // changed props
-        p1={1}
-        p2={2}
-        p1={3}
-        // addon props by jsx
-        pv1="v1"
-        pv2="v2"
-        pv3="v3"
-        // ctx pass
-        pass={
-          p1: true,
-          p2: true,
-          p3: true,
-        }
-      />
-    </P1>
-  </P2>
-</P3
 ```
 
 > use
