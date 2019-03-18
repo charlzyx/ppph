@@ -95,7 +95,7 @@ import { piper } from 'ppph';
  * @param when (type, props) => boolean | any; when to use the pipe
  * @param how: (Comp: ReactElement) => ReactElement, how to deal with HOC
  * @param why (e) => void; will be call when error occur.
- * @param ph [ph, key]; the sort important value for your pipe,
+ * @param ph [ph, key]; the sort weight value for your pipe,
  * smaller ph mean height power just like pH, key is sort by your props write sort, default ph is 7.
  * @constructor
  */
