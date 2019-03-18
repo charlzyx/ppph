@@ -28,8 +28,8 @@ npm install ppph -S
  *      </P1>
  *    </P2>
  *  </P3>
- * ---------------------------------------------------------
  *
+ * ---------------------------------------------------------
  * PipeHOC diff with normal HOC
  * 1. statics:  because is no decorator or HOC(Comp) to write, so statics is no need to hoist
  * 2. forwardRef: will be 2nd param for Pipe HOC, gift for you.
