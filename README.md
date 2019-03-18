@@ -1,4 +1,15 @@
-# **P**ipes **P**rops **P**ass to **H**oc
+# **P**ipe **P**rops **P**ass to **H**oc
+
+> install
+
+```bash
+yarn add ppph
+```
+
+```
+npm install ppph -S
+```
+
 
 ```js
 /**
