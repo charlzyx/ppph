@@ -50,11 +50,11 @@ class PlayGround extends Component {
           />
         </fieldset>
         <fieldset>
-          <legend>pipe: changeAdaptor + fixed</legend>
+          <legend>pipe: changeAdaptor + fixed=2</legend>
           <input
             ref={this.ref2}
             changeAdaptor={e => e.target.value}
-            fixed
+            fixed={2}
 
             type="text"
             value={state.info.num2}
@@ -67,7 +67,6 @@ class PlayGround extends Component {
             ref={ref => this.ref3 = ref}
 
             kb
-            fixed
             changeAdaptor={e => e.target.value}
 
             type="text"
@@ -76,12 +75,12 @@ class PlayGround extends Component {
           />
         </fieldset>
         <fieldset>
-          <legend>pipe: changeAdaptor + kb + fixed</legend>
+          <legend>pipe: changeAdaptor + kb + fixed=3</legend>
           <input
             ref={ref => this.ref4 = ref}
 
             kb
-            fixed
+            fixed={3}
             changeAdaptor={e => e.target.value}
 
             type="text"

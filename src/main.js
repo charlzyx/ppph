@@ -16,7 +16,6 @@
  * ----------------------------------------------------------------------------
  * PipeHOC diff with normal HOC
  * 1. statics:  because is no decorator or HOC(Comp) to write, so statics is no need to hoist
- * 2. forwardRef: will be 2nd param for Pipe HOC, gift for you.
  * ----------------------------------------------------------------------------
  * runtime surprise!
  */
@@ -33,21 +32,28 @@ const pipeErrMsg = `[Pipe] param error, check constructor:
    when: (type: ElementType, props: ElementProps) => boolean | any,
    how: (Comp: ReactElement) => ReactElement,
    why: (e: Error) => void
-   ph: [ph, key]
+   ph?: [pH, key]
   }) => void;
   --------------------------------------------
 `;
 
 /**
- * pipe for ppph's constructor
- * @param who string; name for pipe
- * @param when (type, props) => boolean | any; when to use the pipe
- * @param how: (Comp: ReactElement) => ReactElement, how to deal with HOC
- * @param why (e) => void; will be call when error occur.
- * @param ph [ph, key]; the important for your pipe,
- * min ph mean height power just like pH, key is sort by your props write sort, default ph is 7.
- * @constructor
+ * -----------------------------------------------
+ * pipe type defines
+ * -----------------------------------------------
+ * ↓ name for pipe
+ * @param who required. type: String;
+ * ↓ condition to use the pipe
+ * @param when required. type: (type, props) => boolean | any;
+ * ↓ the HOC for this pipe, means how to deal with it
+ * @param how required. type: (Comp: ReactElement) => ReactElement;
+ * ↓ a callback will be call when error occur
+ * @param why required. type: (e) => void;
+ * ↓ pH: means sort weight, just like pH, the lower pH value, the heighter sort weight;",
+ * ↓ key: pependent key name in JSX, which will be sort by write order;",
+ * @param ph type: [pH, key];
  */
+
 function Pipe({
   who, when, how, why, ph,
 }) {
@@ -72,16 +78,13 @@ function Pipe({
 // TODO: LRU
 const CACHE = new Map();
 
-const getHOC = (pipe, c, ref) => {
+const getHOC = (pipe, c) => {
   let HOC;
-  if (CACHE.has(pipe.how)
-    && CACHE.get(pipe.how).has(c.type)
-    && CACHE.get(pipe.how).get(c.type).has(ref)
-  ) {
-    HOC = CACHE.get(pipe.how).get(c.type).get(ref);
+  if (CACHE.has(pipe.how) && CACHE.get(pipe.how).has(c.type)) {
+    HOC = CACHE.get(pipe.how).get(c.type);
   } else {
     try {
-      HOC = pipe.how(c.type, ref);
+      HOC = pipe.how(c.type);
     } catch (e) {
       pipe.why(e);
       return c;
@@ -90,12 +93,10 @@ const getHOC = (pipe, c, ref) => {
       CACHE.set(pipe.how, new Map());
     }
     if (!CACHE.get(pipe.how).has(c.type)) {
-      CACHE.get(pipe.how).set(c.type, new Map());
-    }
-    if (!CACHE.get(pipe.how).get(c.type).has(ref)) {
-      CACHE.get(pipe.how).get(c.type).set(ref, HOC);
+      CACHE.get(pipe.how).set(c.type, HOC);
     }
   }
+
   return HOC;
 };
 
@@ -147,7 +148,7 @@ const ppph = {
   },
   getNeedPipes(type, props) {
     const keyIndexMap = Object.keys(props).reduce((map, key, index) => {
-      map[key] = index + 7;
+      map[key] = index + 7;  // eslint-disable-line
       return map;
     }, {});
 
@@ -181,24 +182,19 @@ const ppph = {
   flush(type, props, children) {
     const pipes = ppph.getNeedPipes(type, props);
     const ctxProps = { ...props, [NATIVE_FLAG]: NATIVE_FLAG };
-    const deepChild = React.createElement(type, ctxProps, children);
 
-    const vdom = pipes.reduce((c, pipe) => {
+    const element = pipes.reduce((c, pipe) => {
       // null to fix input like no children
       const ctx = {
         ...c.props,
-        ref: ctxProps.ref,
+        ref: props.ref,
         children: children.length === 0 ? null : children,
       };
+      const HOC = getHOC(pipe, c);
 
-      const forwardRefHOC = React.forwardRef((fprops, ref) => {
-        const HOC = getHOC(pipe, c, ref);
-        return React.createElement(HOC, { ...fprops, forwardRef: ref });
-      });
-
-      return React.createElement(forwardRefHOC, ctx, ctx.children);
-    }, deepChild);
-    return vdom;
+      return ReactCreateElement(HOC, ctx, ctx.children);
+    }, ReactCreateElement(type, ctxProps, children));
+    return element;
   },
 
   /**
@@ -214,7 +210,6 @@ const ppph = {
       && ppph.getNeedPipes(type, props).length > 0;
 
     if (shouldPipe) {
-      console.log(props);
       return ppph.flush(type, props, children);
     }
 

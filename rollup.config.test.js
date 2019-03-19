@@ -31,6 +31,8 @@ export default [
             'Component',
             'PureComponent',
             'createElement',
+            'createRef',
+            'forwardRef',
           ],
         },
       }),

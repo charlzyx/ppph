@@ -10,7 +10,7 @@ yarn add ppph
 npm install ppph -S
 ```
 
-> desc    
+> desc
 
 ```js
 /**
@@ -18,24 +18,16 @@ npm install ppph -S
  * ppph: Pipe Props Pass to Hoc
  * ---------------------------------------------------------
  *
- * // before: in code
- *   <AnyComp p1="p1" p2="p2" p3="p3" />
- * ->
- * // after: in Chrome React DevTools
- *  <P3 p1="p1" p2="p2" p3="p3">
- *    <P2 p1="p1" p2="p2" p3="p3">
- *      <P1 p1="p1" p2="p2" p3="p3">
- *        <AnyComp p1="p1" p2="p2" p3="p3" />
- *      </P1>
- *    </P2>
- *  </P3>
+ * before:
+ *  <AnyComp p1="p1" p2="p2" />
+ * after:
+ *  <P2 p1="p1" p2="p2" >
+ *    <P1 p1="p1" p2="p2">
+ *      <AnyComp p1="p1" p2="p2" />
+ *    </P1>
+ *  </P2>
  *
  * ---------------------------------------------------------
- * PipeHOC diff with normal HOC
- * 1. statics:  because is no decorator or HOC(Comp) to write, so statics is no need to hoist
- * 2. forwardRef: will be 2nd param for Pipe HOC, gift for you.
- * ---------------------------------------------------------
- *
  * runtime surprise!
  */
 ```
@@ -54,72 +46,131 @@ import { p1, p2, p3 } from './your/pipes';
 
 ppph.use(p1);
 ppph.use(p2);
-ppph.use(p3);
 ppph.inject();
 
 ReactDOM.render(<App />, document.getElementById('#app'));
 ```
 
-> api & example for pipe
+> api
 
-[npm run d](./test)
+  - use(p: Pipe) => void
 
-```js
+  - piper(p: PipeOption) => Pipe
 
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import hoistNonReactStatics from 'hoist-non-react-statics';
-import { piper } from 'ppph';
+    ```js
+    /**
+      * -----------------------------------------------
+      * pipe type defines
+      * -----------------------------------------------
+      * ↓ name for pipe
+      * @param who required. type: String;
+      * ↓ condition to use the pipe
+      * @param when required. type: (type, props) => boolean | any;
+      * ↓ the HOC for this pipe, means how to deal with it
+      * @param how required. type: (Comp: ReactElement) => ReactElement;
+      * ↓ a callback will be call when error occur
+      * @param why required. type: (e) => void;
+      * ↓ pH: means sort weight, just like pH, the lower pH value, the heighter sort weight;",
+      * ↓ key: pependent key name in JSX, which will be sort by write order;",
+      * @param ph type: [pH, key];
+      */
+    ```
 
-/**
- * pipe for ppph's constructor
- * @param who string; name for pipe
- * @param when (type, props) => boolean | any; when to use the pipe
- * @param how: (Comp: ReactElement) => ReactElement, how to deal with HOC
- * @param why (e) => void; will be call when error occur.
- * @param ph [ph, key]; the sort weight value for your pipe,
- * smaller ph mean height power just like pH, key is sort by your props write sort, default ph is 7.
- * @constructor
- */
 
-export const P1HOC = (Comp, forwardRef) => {
-  class P1 extends Component {
-    static propTypes = {
-      pass: PropTypes.object,
-    };
-    componentDidMount() {
-      console.log('p1 did mount');
-    }
+> example
+    [npm run d](./test)
 
-    render() {
-      const { pass = {} } = this.props;
-      const ctx = {
-        ...this.props,
-        pass: {
-          ...pass,
-          p1: true,
-        },
+  ```js
+  import React, { Component, forwardRef } from 'react';
+  import PropTypes from 'prop-types';
+  import hoistNonReactStatics from 'hoist-non-react-statics';
+  import { piper } from '../../src/main';
+
+  /**
+   * --------------------------------------------
+   * PipeHOCKeyboardSupport
+   * --------------------------------------------
+   * introduce your pipeHOC
+   */
+  const PipeHOCKeyboardSupport = (Comp) => {
+    class PipeKeyboardSupportWrapper extends Component {
+      static displayName = `PipeKeyboardSupportWrapper${Comp.displayName || Comp.name || ''}`;
+
+      static propTypes = {
+        forwardRef: PropTypes.oneOfType([
+          PropTypes.func,
+          PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+        ]),
+        onKeyDown: PropTypes.func,
+        onChange: PropTypes.func,
+        value: PropTypes.number,
       };
-      console.log('P1 render', this.props);
-      // don't forget forwardRef, two ways to do this
-      // 1. like react doc
-      // return <Comp {...ctx} ref={this.props.forwardRef} p1={1} pv1="v1" />;
-      // 2. friendly, the 2nd param is the forwardRef, so you can easily write by this
-      return <Comp {...ctx} ref={forwardRef} p1={1} pv1="v1" />;
+
+      static defaultProps = {
+        forwardRef: null,
+        onKeyDown: () => { },
+        onChange: () => { },
+        value: null,
+      }
+
+      onKeyDown = (e) => {
+        const { value, onChange } = this.props;
+        let next = value;
+        if (e.key === 'ArrowUp') {
+          try {
+            next = +value + 1;
+          } catch (error) {
+            console.log('onKeyDown error', error);
+          }
+        }
+        if (e.key === 'ArrowDown') {
+          try {
+            next = +value - 1;
+          } catch (error) {
+            console.log('onKeyDown error', error);
+          }
+        }
+
+        onChange(next);
+      }
+
+      render() {
+        const { props } = this;
+        const nextProps = {
+          ...props,
+          ref: props.forwardRef,
+          onKeyDown: this.onKeyDown,
+        };
+        return <Comp {...nextProps} />;
+      }
     }
-  }
-  return P1;
-};
 
-export const p1 = piper({
-  who: 'p1',
-  when: (type, props) => props.p1,
-  how: P1HOC,
-  why: (e) => { console.log('P1HOC', e); },
-  ph: [-100, 'p1'],
-});
+    // it is not need for ppph, but it better to make your PipeHOC common.
+    hoistNonReactStatics(PipeKeyboardSupportWrapper, Comp);
+    // forward the ref.
+    return forwardRef((props, ref) => <PipeKeyboardSupportWrapper {...props} forwardRef={ref} />);
+  };
 
-```
+  /**
+   * --------------------------------------------
+   * pipe keyboard
+   * --------------------------------------------
+   * add keyboard support for number input, ArrowUp to add 1, ArrowDown to sub 1
+   */
+  export default piper({
+    who: 'keyboardSupport', // name for pipe
+    when: (type, props) => props.kb, // condition to use the pipe
+    how: PipeHOCKeyboardSupport, // the HOC for this pipe, means how to deal with it
+    why: (e) => { // a callback will be call when error occur.
+      console.error('[PipeHOCKeyboardSupport] error: ');
+      console.dir(e);
+    },
+    // pH: means sort weight, just like pH, the lower pH value, the heighter sort weight;
+    // key: pependent key name in JSX, which will be sort by write order;
+    ph: [7, ''],
+  });
+
+  ```
 
 > how
 
