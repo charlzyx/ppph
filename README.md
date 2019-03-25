@@ -2,18 +2,8 @@
 
 # Pipe Props Pass to Hoc
 
+> why
 
-[![](https://badge.juejin.im/entry/5c8fc23de51d4510000a9688/likes.svg?style=flat-square)](https://juejin.im/entry/5c8fc23de51d4510000a9688/detail)
-
-> install
-
-```bash
-yarn add ppph
-```
-
-```
-npm install ppph -S
-```
 
 > desc
 
@@ -36,6 +26,17 @@ npm install ppph -S
  * runtime surprise!
  * ---------------------------------------------------------
  */
+```
+
+
+> install
+
+```bash
+yarn add ppph
+```
+
+```
+npm install ppph -S
 ```
 
 > use
@@ -86,6 +87,7 @@ ReactDOM.render(<App />, document.getElementById('#app'));
 > example
 
     [npm run d](./test)
+
 
     ```js
     import React, { Component, forwardRef } from 'react';
@@ -152,10 +154,12 @@ ReactDOM.render(<App />, document.getElementById('#app'));
         }
       }
 
+     // forward the ref.
+      const ForwardPipeKeyboardSupportWrapper =
+       forwardRef((props, ref) => <PipeKeyboardSupportWrapper {...props} forwardRef={ref} />);
       // it is not need for ppph, but it better to make your PipeHOC common.
-      hoistNonReactStatics(PipeKeyboardSupportWrapper, Comp);
-      // forward the ref.
-      return forwardRef((props, ref) => <PipeKeyboardSupportWrapper {...props} forwardRef={ref} />);
+      hoistNonReactStatics(ForwardPipeKeyboardSupportWrapper, Comp);
+
     };
 
     /**
@@ -182,6 +186,9 @@ ReactDOM.render(<App />, document.getElementById('#app'));
 > how
 
 by inject `React.createElement`
+
+> TODO:
+  - how to clean the `CACHE`
 
 > inspired
 

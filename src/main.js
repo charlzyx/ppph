@@ -18,82 +18,82 @@
  */
 
 import React from 'react';
+import { Pipe, piper } from './pipe';
 
 const ReactCreateElement = React.createElement;
 const NATIVE_FLAG = '__ppph_flag_gao_yin_tian_zhong_yin_zhun_di_yin_chen_zong_zhi__';
 const isType = (o, t) => Object.prototype.toString.call(o) === `[object ${t}]`;
-
-const pipeErrMsg = `[Pipe] param error, check constructor:
-  ({
-   who: string,
-   when: (type: ElementType, props: ElementProps) => boolean | any,
-   how: (Comp: ReactElement) => ReactElement,
-   why: (e: Error) => void
-   ph?: [pH, key]
-  }) => void;
-  --------------------------------------------
-`;
+const getChildren = (children) => {
+  if (!children) return children;
+  if (children.length === 0) return null;
+  if (children.length === 1) return children[0];
+  return children;
+};
 
 /**
- * -----------------------------------------------
- * pipe type defines
- * -----------------------------------------------
- * ↓ name for pipe
- * @param who required. type: String;
- * ↓ condition to use the pipe
- * @param when required. type: (type, props) => boolean | any;
- * ↓ the HOC for this pipe, means how to deal with it
- * @param how required. type: (Comp: ReactElement) => ReactElement;
- * ↓ a callback will be call when error occur
- * @param why required. type: (e) => void;
- * ↓ pH: means sort weight, just like pH, the lower pH value, the heighter sort weight;",
- * ↓ key: pependent key name in JSX, which will be sort by write order;",
- * @param ph type: [pH, key];
+ * - [HOC]
+ *   - [Comp]
+ *     - instance
+ *     - refers
  */
 
-function Pipe({
-  who, when, how, why, ph,
-}) {
-  if (!isType(who, 'String')) {
-    throw new Error(`${pipeErrMsg} at who: ${who}`);
-  }
-  if (!isType(when, 'Function')) {
-    throw new Error(`${pipeErrMsg} at when: ${when}`);
-  }
-  if (!isType(how, 'Function')) {
-    throw new Error(`${pipeErrMsg} at how: ${how}`);
-  }
-  if (!isType(why, 'Function')) {
-    throw new Error(`${pipeErrMsg} at why: ${why}`);
-  }
-  this.who = who;
-  this.when = when;
-  this.how = how;
-  this.why = why;
-  this.ph = ph;
-}
-// TODO: LRU
-const CACHE = new Map();
+class Cache {
+   map = new Map();
 
-const getHOC = (pipe, c) => {
+   has(HOC, Comp) {
+     return this.map.has(HOC) && this.map.get(HOC).has(Comp);
+   }
+
+   // refers 联动 clean
+   get(HOC, Comp) {
+     const next = this.map.get(HOC).get(Comp);
+     //  next.refers++; // eslint-disable-line
+     this.map.get(HOC).set(Comp, next);
+     return this.map.get(HOC).get(Comp).instance;
+   }
+
+   set(HOC, Comp, instance) {
+     if (!this.map.has(HOC)) {
+       this.map.set(HOC, new Map());
+     }
+     if (!this.map.get(HOC).has(Comp)) {
+       this.map.get(HOC).set(Comp, { instance, refers: 0 });
+     }
+     const next = this.map.get(HOC).get(Comp);
+     next.refers++; // eslint-disable-line
+     return this.map.get(HOC).set(Comp, next);
+   }
+
+   // 联动get中的refers
+   clean(HOC, Comp) {
+     const info = this.map.get(HOC).get(Comp);
+     info.refers--; // eslint-disable-line
+     if (info.refers === 0) {
+       this.map.get(HOC).delete(Comp);
+       if (this.map.get(HOC).size === 0) {
+         this.map.delete(HOC);
+       }
+     } else {
+       this.map.get(HOC).set(Comp, info);
+     }
+   }
+}
+
+const cache = new Cache();
+
+const getHOC = (pipe, c, isNewRefer) => {
   let HOC;
-  if (CACHE.has(pipe.how) && CACHE.get(pipe.how).has(c.type)) {
-    HOC = CACHE.get(pipe.how).get(c.type);
+  if (cache.has(pipe.how, c.type)) {
+    HOC = cache.get(pipe.how, c.type, isNewRefer);
   } else {
     try {
       HOC = pipe.how(c.type);
+      cache.set(pipe.how, c.type, HOC);
     } catch (e) {
       pipe.why(e);
       return c;
     }
-    if (!CACHE.has(pipe.how)) {
-      CACHE.set(pipe.how, new Map());
-    }
-    if (!CACHE.get(pipe.how).has(c.type)) {
-      CACHE.get(pipe.how).set(c.type, HOC);
-    }
   }
-
   return HOC;
 };
 
@@ -176,16 +176,16 @@ const ppph = {
 
     return needs;
   },
-  flush(type, props, children) {
+  flush(type, props, childArray) {
+    const children = getChildren(childArray);
     const pipes = ppph.getNeedPipes(type, props);
-    const ctxProps = { ...props, [NATIVE_FLAG]: NATIVE_FLAG };
+    const ctxProps = { ...props, [NATIVE_FLAG]: NATIVE_FLAG, ref: (ref) => { console.log('ref', ref); } };
 
     const element = pipes.reduce((c, pipe) => {
-      // null to fix input like no children
       const ctx = {
         ...c.props,
         ref: props.ref,
-        children: children.length === 0 ? null : children,
+        children,
       };
       const HOC = getHOC(pipe, c);
 
@@ -218,24 +218,6 @@ const ppph = {
   },
 };
 
-
-/**
- *
- * @param who
- * @param when
- * @param how
- * @param why
- * @returns {Pipe}
- */
-const piper = ({
-  who,
-  when,
-  how,
-  why,
-  ph,
-}) => new Pipe({
-  who, when, how, why, ph,
-});
 
 export default ppph;
 

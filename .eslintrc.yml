@@ -4,7 +4,7 @@ env:
 parser: babel-eslint
 rules:
   react/prefer-stateless-function: 1
-  react/jsx-filename-extension: 1
+  react/jsx-filename-extension: 0
   react/no-multi-comp: 1
   no-underscore-dangle: 1
   jsx-a11y/no-noninteractive-element-interactions: 1
