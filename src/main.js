@@ -177,20 +177,21 @@ const ppph = {
     return needs;
   },
   flush(type, props, childArray) {
-    const children = getChildren(childArray);
     const pipes = ppph.getNeedPipes(type, props);
-    const ctxProps = { ...props, [NATIVE_FLAG]: NATIVE_FLAG, ref: (ref) => { console.log('ref', ref); } };
+    const ctxProps = { ...props, [NATIVE_FLAG]: NATIVE_FLAG };
 
     const element = pipes.reduce((c, pipe) => {
       const ctx = {
         ...c.props,
         ref: props.ref,
-        children,
+        key: props.key,
       };
       const HOC = getHOC(pipe, c);
-
+      if (Array.isArray(ctx.children)) {
+        return ReactCreateElement(HOC, ctx, ...ctx.children);
+      }
       return ReactCreateElement(HOC, ctx, ctx.children);
-    }, ReactCreateElement(type, ctxProps, children));
+    }, ReactCreateElement(type, ctxProps, ...childArray));
     return element;
   },
 
